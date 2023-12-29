@@ -12,8 +12,18 @@ import (
 )
 
 type Command struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
+	Name        string          `json:"name"`
+	Description string          `json:"description"`
+	Options     []CommandOption `json:"options"`
+}
+
+type CommandOption struct {
+	Type                    int               `json:"type"`
+	Name                    string            `json:"name"`
+	NameLocalization        map[string]string `json:"name_localization"`
+	Description             string            `json:"description"`
+	DescriptionLocalization map[string]string `json:"description_localization"`
+	Required                bool              `json:"required"`
 }
 
 func main() {
@@ -26,6 +36,28 @@ func main() {
 		{
 			Name:        "test",
 			Description: "test command",
+		},
+		{
+			Name:        "register",
+			Description: "register got item",
+			Options: []CommandOption{
+				{
+					Type:                    3,
+					Name:                    "item",
+					NameLocalization:        map[string]string{"ja": "素材名"},
+					Description:             "item name",
+					DescriptionLocalization: map[string]string{"ja": "登録したい素材名"},
+					Required:                true,
+				},
+				{
+					Type:                    3,
+					Name:                    "duration",
+					NameLocalization:        map[string]string{"ja": "リポップ時間"},
+					Description:             "duration of repop",
+					DescriptionLocalization: map[string]string{"ja": "素材がリポップするのにかかる時間"},
+					Required:                true,
+				},
+			},
 		},
 	}
 	body, err := json.Marshal(testCommand)
