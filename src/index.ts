@@ -33,6 +33,7 @@ app.post("/", async (c) => {
         });
       }
       case "register": {
+        console.log(body.data);
         return c.json({
           type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
           data: { content: "registered" },
