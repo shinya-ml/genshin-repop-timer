@@ -14,9 +14,9 @@ type Bindings = {
 const app = new Hono<{ Bindings: Bindings }>();
 
 type RepopInfo = {
-  ItemName: string;
-  StartTimeStamp: string;
-  EndTimeStamp: string;
+  itemName: string;
+  startTimeStamp: string;
+  endTimeStamp: string;
 };
 
 app.post("/", async (c) => {
@@ -44,9 +44,9 @@ app.post("/", async (c) => {
         const duration = parseInt(durationRaw.match(/\d+/)[0]);
         const durationUnit = durationRaw.replace(/\d+/g, "");
         const repopInfo: RepopInfo = {
-          ItemName: body.data.options[0].value,
-          StartTimeStamp: dayjs().toISOString(),
-          EndTimeStamp: dayjs().add(duration, durationUnit).toISOString(),
+          itemName: body.data.options[0].value,
+          startTimeStamp: dayjs().toISOString(),
+          endTimeStamp: dayjs().add(duration, durationUnit).toISOString(),
         };
         return c.json({
           type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
