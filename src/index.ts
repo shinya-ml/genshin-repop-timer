@@ -50,7 +50,7 @@ app.post("/", async (c) => {
         };
         return c.json({
           type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-          data: { content: repopInfo },
+          data: { content: `registerd: ${JSON.stringify(repopInfo)}` },
         });
       }
     }
