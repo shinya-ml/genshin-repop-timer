@@ -4,6 +4,7 @@ import {
   InteractionResponseType,
   verifyKey,
 } from "discord-interactions";
+import dayjs from "dayjs";
 
 type Bindings = {
   APPLICATION_ID: string;
@@ -11,6 +12,12 @@ type Bindings = {
   TOKEN: string;
 };
 const app = new Hono<{ Bindings: Bindings }>();
+
+type RepopInfo = {
+  ItemName: string;
+  StartTimeStamp: string;
+  EndTimeStamp: string;
+};
 
 app.post("/", async (c) => {
   const signature = c.req.header("X-Signature-Ed25519") ?? "";
@@ -33,10 +40,17 @@ app.post("/", async (c) => {
         });
       }
       case "register": {
-        console.log(body.data);
+        const durationRaw = body.data.options[1].value;
+        const duration = parseInt(durationRaw.match(/\d+/)[0]);
+        const durationUnit = durationRaw.replace(/\d+/g, "");
+        const repopInfo: RepopInfo = {
+          ItemName: body.data.options[0].value,
+          StartTimeStamp: dayjs().toISOString(),
+          EndTimeStamp: dayjs().add(duration, durationUnit).toISOString(),
+        };
         return c.json({
           type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-          data: { content: "registered" },
+          data: { content: "registered", embeds: [repopInfo] },
         });
       }
     }
