@@ -62,10 +62,16 @@ app.post("/", async (c) => {
             .run();
         } catch (e) {
           if (e instanceof Error) {
-            return c.json({ content: e.message });
+            return c.json({
+              type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+              data: { content: e.message },
+            });
           }
           const err = JSON.stringify(e);
-          return c.json({ content: err });
+          return c.json({
+            type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+            data: { content: err },
+          });
         }
         return c.json({
           type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -81,19 +87,34 @@ app.post("/", async (c) => {
             .bind(itemName)
             .first<RepopInfo>();
           if (!res) {
-            return c.json({ content: "item not registered" });
+            return c.json({
+              type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+              data: { content: "item not registered" },
+            });
           }
 
           if (dayjs().isAfter(res.endTimeStamp)) {
-            return c.json({ content: "item repoped" });
+            return c.json({
+              type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+              data: { content: "item repoped" },
+            });
           }
-          return c.json({ content: JSON.stringify(res) });
+          return c.json({
+            type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+            data: { content: `${JSON.stringify(res)}` },
+          });
         } catch (e) {
           if (e instanceof Error) {
-            return c.json({ content: e.message });
+            return c.json({
+              type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+              data: { content: e.message },
+            });
           }
           const err = JSON.stringify(e);
-          return c.json({ content: err });
+          return c.json({
+            type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+            data: { content: err },
+          });
         }
       }
     }
