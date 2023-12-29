@@ -52,7 +52,7 @@ app.post("/", async (c) => {
 
         try {
           const res = await c.env.DB.prepare(
-            "INSERT INTO repop_itesm (item_name, start_timestamp, end_timestamp) VALUES (?1, ?2, ?3)",
+            "INSERT INTO repop_items (item_name, start_timestamp, end_timestamp) VALUES (?1, ?2, ?3)",
           )
             .bind(
               repopInfo.itemName,
@@ -62,6 +62,7 @@ app.post("/", async (c) => {
             .run();
           console.log(res);
         } catch (e) {
+          console.log(e);
           if (e instanceof Error) {
             return c.json({ content: e.message });
           }
