@@ -59,6 +59,20 @@ func main() {
 				},
 			},
 		},
+		{
+			Name:        "verify",
+			Description: "verify if item is respoped",
+			Options: []CommandOption{
+				{
+					Type:                    3,
+					Name:                    "item",
+					NameLocalization:        map[string]string{"ja": "素材名"},
+					Description:             "item name",
+					DescriptionLocalization: map[string]string{"ja": "登録したい素材名"},
+					Required:                true,
+				},
+			},
+		},
 	}
 	body, err := json.Marshal(testCommand)
 	if err != nil {

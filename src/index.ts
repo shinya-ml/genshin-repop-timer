@@ -51,7 +51,7 @@ app.post("/", async (c) => {
         };
 
         try {
-          const res = await c.env.DB.prepare(
+          await c.env.DB.prepare(
             "INSERT INTO repop_items (item_name, start_timestamp, end_timestamp) VALUES (?1, ?2, ?3)",
           )
             .bind(
@@ -60,9 +60,7 @@ app.post("/", async (c) => {
               repopInfo.endTimeStamp,
             )
             .run();
-          console.log(res);
         } catch (e) {
-          console.log(e);
           if (e instanceof Error) {
             return c.json({ content: e.message });
           }
@@ -73,6 +71,30 @@ app.post("/", async (c) => {
           type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
           data: { content: `registerd: ${JSON.stringify(repopInfo)}` },
         });
+      }
+      case "verify": {
+        const itemName = body.data.options[0].value;
+        try {
+          const res = await c.env.DB.prepare(
+            "SELECT item_name as itemName, start_timestamp as startTimeStamp, end_timestamp as endTimeStamp FROM repop_items WHERE item_name = ?1",
+          )
+            .bind(itemName)
+            .first<RepopInfo>();
+          if (!res) {
+            return c.json({ content: "item not registered" });
+          }
+
+          if (dayjs().isAfter(res.endTimeStamp)) {
+            return c.json({ content: "item repoped" });
+          }
+          return c.json({ content: JSON.stringify(res) });
+        } catch (e) {
+          if (e instanceof Error) {
+            return c.json({ content: e.message });
+          }
+          const err = JSON.stringify(e);
+          return c.json({ content: err });
+        }
       }
     }
   }
