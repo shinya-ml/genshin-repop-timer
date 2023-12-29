@@ -10,6 +10,7 @@ type Bindings = {
   APPLICATION_ID: string;
   PUBLIC_KEY: string;
   TOKEN: string;
+  DB: D1Database;
 };
 const app = new Hono<{ Bindings: Bindings }>();
 
@@ -48,6 +49,25 @@ app.post("/", async (c) => {
           startTimeStamp: dayjs().toISOString(),
           endTimeStamp: dayjs().add(duration, durationUnit).toISOString(),
         };
+
+        try {
+          const res = await c.env.DB.prepare(
+            "INSERT INTO repop_itesm (item_name, start_timestamp, end_timestamp) VALUES (?1, ?2, ?3)",
+          )
+            .bind(
+              repopInfo.itemName,
+              repopInfo.startTimeStamp,
+              repopInfo.endTimeStamp,
+            )
+            .run();
+          console.log(res);
+        } catch (e) {
+          if (e instanceof Error) {
+            return c.json({ content: e.message });
+          }
+          const err = JSON.stringify(e);
+          return c.json({ content: err });
+        }
         return c.json({
           type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
           data: { content: `registerd: ${JSON.stringify(repopInfo)}` },
