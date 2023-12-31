@@ -95,12 +95,13 @@ app.post("/", verifyKeyMiddleware, async (c) => {
           });
         }
         case "verify": {
+          const userId = body.member.user.id;
           const itemName = body.data.options[0].value;
           try {
             const res = await c.env.DB.prepare(
-              "SELECT item_name as itemName, start_timestamp as startTimeStamp, end_timestamp as endTimeStamp FROM repop_items WHERE item_name = ?1",
+              "SELECT item_name as itemName, start_timestamp as startTimeStamp, end_timestamp as endTimeStamp FROM repop_items WHERE item_name = ?1 and discord_user_id = ?2",
             )
-              .bind(itemName)
+              .bind(itemName, userId)
               .first<RepopInfo>();
             if (!res) {
               return c.json({
