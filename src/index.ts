@@ -1,4 +1,4 @@
-import { Hono } from "hono";
+import { Context, Handler, Hono, Next } from "hono";
 import {
   InteractionType,
   InteractionResponseType,
@@ -20,14 +20,24 @@ type RepopInfo = {
   endTimeStamp: string;
 };
 
-app.post("/", async (c) => {
+async function verifyKeyMiddleware(c: Context, next: Next) {
   const signature = c.req.header("X-Signature-Ed25519") ?? "";
   const timestamp = c.req.header("X-Signature-Timestamp") ?? "";
   const raw = await c.req.raw.clone().text();
   const isValid = verifyKey(raw, signature, timestamp, c.env.PUBLIC_KEY);
   if (!isValid) {
-    return c.json({ message: "invalid request" }, 401);
+    return c.json(
+      {
+        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+        data: { message: "invalid request" },
+      },
+      401,
+    );
   }
+  return next();
+}
+
+app.post("/", verifyKeyMiddleware, async (c) => {
   const body = await c.req.json();
   if (body.type === InteractionType.PING) {
     return c.json({ type: 1 }, 200);
