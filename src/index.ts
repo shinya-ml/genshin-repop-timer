@@ -39,92 +39,98 @@ async function verifyKeyMiddleware(c: Context, next: Next) {
 
 app.post("/", verifyKeyMiddleware, async (c) => {
   const body = await c.req.json();
-  if (body.type === InteractionType.PING) {
-    return c.json({ type: 1 }, 200);
-  }
-  if (body.type === InteractionType.APPLICATION_COMMAND) {
-    switch (body.data.name) {
-      case "test": {
-        return c.json({
-          type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-          data: { content: "hello world" },
-        });
-      }
-      case "register": {
-        const durationRaw = body.data.options[1].value;
-        const duration = parseInt(durationRaw.match(/\d+/)[0]);
-        const durationUnit = durationRaw.replace(/\d+/g, "");
-        const repopInfo: RepopInfo = {
-          itemName: body.data.options[0].value,
-          startTimeStamp: dayjs().toISOString(),
-          endTimeStamp: dayjs().add(duration, durationUnit).toISOString(),
-        };
-
-        try {
-          await c.env.DB.prepare(
-            "INSERT INTO repop_items (item_name, start_timestamp, end_timestamp) VALUES (?1, ?2, ?3)",
-          )
-            .bind(
-              repopInfo.itemName,
-              repopInfo.startTimeStamp,
-              repopInfo.endTimeStamp,
-            )
-            .run();
-        } catch (e) {
-          if (e instanceof Error) {
-            return c.json({
-              type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-              data: { content: e.message },
-            });
-          }
-          const err = JSON.stringify(e);
+  switch (body.type) {
+    case InteractionType.PING: {
+      return c.json({ type: 1 }, 200);
+    }
+    case InteractionType.APPLICATION_COMMAND: {
+      switch (body.data.name) {
+        case "test": {
           return c.json({
             type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-            data: { content: err },
+            data: { content: "hello world" },
           });
         }
-        return c.json({
-          type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-          data: { content: `registerd: ${JSON.stringify(repopInfo)}` },
-        });
-      }
-      case "verify": {
-        const itemName = body.data.options[0].value;
-        try {
-          const res = await c.env.DB.prepare(
-            "SELECT item_name as itemName, start_timestamp as startTimeStamp, end_timestamp as endTimeStamp FROM repop_items WHERE item_name = ?1",
-          )
-            .bind(itemName)
-            .first<RepopInfo>();
-          if (!res) {
-            return c.json({
-              type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-              data: { content: "item not registered" },
-            });
-          }
+        case "register": {
+          const durationRaw = body.data.options[1].value;
+          const duration = parseInt(durationRaw.match(/\d+/)[0]);
+          const durationUnit = durationRaw.replace(/\d+/g, "");
+          const repopInfo: RepopInfo = {
+            itemName: body.data.options[0].value,
+            startTimeStamp: dayjs().toISOString(),
+            endTimeStamp: dayjs().add(duration, durationUnit).toISOString(),
+          };
 
-          if (dayjs().isAfter(res.endTimeStamp)) {
+          try {
+            await c.env.DB.prepare(
+              "INSERT INTO repop_items (item_name, start_timestamp, end_timestamp) VALUES (?1, ?2, ?3)",
+            )
+              .bind(
+                repopInfo.itemName,
+                repopInfo.startTimeStamp,
+                repopInfo.endTimeStamp,
+              )
+              .run();
+          } catch (e) {
+            if (e instanceof Error) {
+              return c.json({
+                type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+                data: { content: e.message },
+              });
+            }
+            const err = JSON.stringify(e);
             return c.json({
               type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-              data: { content: "item repoped" },
+              data: { content: err },
             });
           }
           return c.json({
             type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-            data: { content: `${JSON.stringify(res)}` },
+            data: {
+              content: `registerd: ${repopInfo.itemName}, it will be repoped at ${repopInfo.endTimeStamp}`,
+            },
           });
-        } catch (e) {
-          if (e instanceof Error) {
+        }
+        case "verify": {
+          const itemName = body.data.options[0].value;
+          try {
+            const res = await c.env.DB.prepare(
+              "SELECT item_name as itemName, start_timestamp as startTimeStamp, end_timestamp as endTimeStamp FROM repop_items WHERE item_name = ?1",
+            )
+              .bind(itemName)
+              .first<RepopInfo>();
+            if (!res) {
+              return c.json({
+                type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+                data: { content: "item not registered" },
+              });
+            }
+
+            if (dayjs().isAfter(res.endTimeStamp)) {
+              return c.json({
+                type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+                data: { content: "item repoped" },
+              });
+            }
             return c.json({
               type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-              data: { content: e.message },
+              data: {
+                content: `${res.itemName} is not repoped yet. it will be repoped at ${res.endTimeStamp}`,
+              },
+            });
+          } catch (e) {
+            if (e instanceof Error) {
+              return c.json({
+                type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+                data: { content: e.message },
+              });
+            }
+            const err = JSON.stringify(e);
+            return c.json({
+              type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+              data: { content: err },
             });
           }
-          const err = JSON.stringify(e);
-          return c.json({
-            type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-            data: { content: err },
-          });
         }
       }
     }
