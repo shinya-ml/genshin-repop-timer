@@ -65,7 +65,11 @@ app.post("/", verifyKeyMiddleware, async (c) => {
 
           try {
             await c.env.DB.prepare(
-              "INSERT INTO repop_items (discord_user_id, item_name, start_timestamp, end_timestamp) VALUES (?1, ?2, ?3, ?4)",
+              `INSERT INTO repop_items
+			  (discord_user_id, item_name, start_timestamp, end_timestamp)
+			  VALUES (?1, ?2, ?3, ?4)
+			  ON CONFLICT (discord_user_id, item_name) DO UPDATE SET start_timestamp = excluded.start_timestamp, end_timestamp = excluded.end_timestamp
+			  `,
             )
               .bind(
                 repopInfo.registerUserId,
