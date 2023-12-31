@@ -15,6 +15,7 @@ type Bindings = {
 const app = new Hono<{ Bindings: Bindings }>();
 
 type RepopInfo = {
+  registerUserId: number;
   itemName: string;
   startTimeStamp: string;
   endTimeStamp: string;
@@ -56,6 +57,7 @@ app.post("/", verifyKeyMiddleware, async (c) => {
           const duration = parseInt(durationRaw.match(/\d+/)[0]);
           const durationUnit = durationRaw.replace(/\d+/g, "");
           const repopInfo: RepopInfo = {
+            registerUserId: body.member.user.id,
             itemName: body.data.options[0].value,
             startTimeStamp: dayjs().toISOString(),
             endTimeStamp: dayjs().add(duration, durationUnit).toISOString(),
@@ -63,9 +65,10 @@ app.post("/", verifyKeyMiddleware, async (c) => {
 
           try {
             await c.env.DB.prepare(
-              "INSERT INTO repop_items (item_name, start_timestamp, end_timestamp) VALUES (?1, ?2, ?3)",
+              "INSERT INTO repop_items (discord_user_id, item_name, start_timestamp, end_timestamp) VALUES (?1, ?2, ?3, ?4)",
             )
               .bind(
+                repopInfo.registerUserId,
                 repopInfo.itemName,
                 repopInfo.startTimeStamp,
                 repopInfo.endTimeStamp,
