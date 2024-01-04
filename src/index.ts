@@ -1,11 +1,11 @@
-import { Context, Handler, Hono, Next } from "hono";
+import { Context, Hono, Next } from "hono";
 import {
   InteractionType,
   InteractionResponseType,
   verifyKey,
 } from "discord-interactions";
-import dayjs from "dayjs";
-import { register, RegisterInput } from "./command/register";
+import { register } from "./command/register";
+import { verify } from "./command/verify";
 
 type Bindings = {
   APPLICATION_ID: string;
@@ -14,13 +14,6 @@ type Bindings = {
   DB: D1Database;
 };
 const app = new Hono<{ Bindings: Bindings }>();
-
-type RepopInfo = {
-  registerUserId: number;
-  itemName: string;
-  startTimeStamp: string;
-  endTimeStamp: string;
-};
 
 async function verifyKeyMiddleware(c: Context, next: Next) {
   const signature = c.req.header("X-Signature-Ed25519") ?? "";
@@ -54,7 +47,7 @@ app.post("/", verifyKeyMiddleware, async (c) => {
           });
         }
         case "register": {
-          const res = await register(c, {
+          const res = await register(c.env.DB, {
             registerUserId: body.member.user.id,
             itemName: body.data.options[0].value,
             duration: body.data.options[1].value,
@@ -65,46 +58,14 @@ app.post("/", verifyKeyMiddleware, async (c) => {
           });
         }
         case "verify": {
-          const userId = body.member.user.id;
-          const itemName = body.data.options[0].value;
-          try {
-            const res = await c.env.DB.prepare(
-              "SELECT item_name as itemName, start_timestamp as startTimeStamp, end_timestamp as endTimeStamp FROM repop_items WHERE item_name = ?1 and discord_user_id = ?2",
-            )
-              .bind(itemName, userId)
-              .first<RepopInfo>();
-            if (!res) {
-              return c.json({
-                type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-                data: { content: "item not registered" },
-              });
-            }
-
-            if (dayjs().isAfter(res.endTimeStamp)) {
-              return c.json({
-                type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-                data: { content: "item repoped" },
-              });
-            }
-            return c.json({
-              type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-              data: {
-                content: `${res.itemName} is not repoped yet. it will be repoped at ${res.endTimeStamp}`,
-              },
-            });
-          } catch (e) {
-            if (e instanceof Error) {
-              return c.json({
-                type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-                data: { content: e.message },
-              });
-            }
-            const err = JSON.stringify(e);
-            return c.json({
-              type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-              data: { content: err },
-            });
-          }
+          const res = await verify(c.env.DB, {
+            userId: body.member.user.id,
+            itemName: body.data.options[0].value,
+          });
+          return c.json({
+            type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+            data: { content: res },
+          });
         }
       }
     }

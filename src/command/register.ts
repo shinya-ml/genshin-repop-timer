@@ -1,4 +1,3 @@
-import { Context } from "hono";
 import dayjs, { ManipulateType } from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
@@ -12,7 +11,7 @@ export type RegisterInput = {
 };
 
 export async function register(
-  c: Context,
+  db: D1Database,
   input: RegisterInput,
 ): Promise<string> {
   const durationNum = parseInt(input.duration.match(/\d+/)?.[0] || "0");
@@ -21,13 +20,14 @@ export async function register(
   const endTimeStamp = now.add(durationNum, durationUnit as ManipulateType);
 
   try {
-    await c.env.DB.prepare(
-      `INSERT INTO repop_items
+    await db
+      .prepare(
+        `INSERT INTO repop_items
 			  (discord_user_id, item_name, start_timestamp, end_timestamp)
 			  VALUES (?1, ?2, ?3, ?4)
 			  ON CONFLICT (discord_user_id, item_name) DO UPDATE SET start_timestamp = excluded.start_timestamp, end_timestamp = excluded.end_timestamp
 			  `,
-    )
+      )
       .bind(
         input.registerUserId,
         input.itemName,
