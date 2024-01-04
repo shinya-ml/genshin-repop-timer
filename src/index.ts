@@ -5,6 +5,7 @@ import {
   verifyKey,
 } from "discord-interactions";
 import dayjs from "dayjs";
+import { register, RegisterInput } from "./command/register";
 
 type Bindings = {
   APPLICATION_ID: string;
@@ -53,49 +54,14 @@ app.post("/", verifyKeyMiddleware, async (c) => {
           });
         }
         case "register": {
-          const durationRaw = body.data.options[1].value;
-          const duration = parseInt(durationRaw.match(/\d+/)[0]);
-          const durationUnit = durationRaw.replace(/\d+/g, "");
-          const repopInfo: RepopInfo = {
+          const res = await register(c, {
             registerUserId: body.member.user.id,
             itemName: body.data.options[0].value,
-            startTimeStamp: dayjs().toISOString(),
-            endTimeStamp: dayjs().add(duration, durationUnit).toISOString(),
-          };
-
-          try {
-            await c.env.DB.prepare(
-              `INSERT INTO repop_items
-			  (discord_user_id, item_name, start_timestamp, end_timestamp)
-			  VALUES (?1, ?2, ?3, ?4)
-			  ON CONFLICT (discord_user_id, item_name) DO UPDATE SET start_timestamp = excluded.start_timestamp, end_timestamp = excluded.end_timestamp
-			  `,
-            )
-              .bind(
-                repopInfo.registerUserId,
-                repopInfo.itemName,
-                repopInfo.startTimeStamp,
-                repopInfo.endTimeStamp,
-              )
-              .run();
-          } catch (e) {
-            if (e instanceof Error) {
-              return c.json({
-                type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-                data: { content: e.message },
-              });
-            }
-            const err = JSON.stringify(e);
-            return c.json({
-              type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-              data: { content: err },
-            });
-          }
+            duration: body.data.options[1].value,
+          });
           return c.json({
             type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-            data: {
-              content: `registerd: ${repopInfo.itemName}, it will be repoped at ${repopInfo.endTimeStamp}`,
-            },
+            data: { content: res },
           });
         }
         case "verify": {
