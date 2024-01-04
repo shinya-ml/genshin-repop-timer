@@ -1,5 +1,9 @@
 import dayjs from "dayjs";
 import { RepopItem } from "../model/item";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 type VerifyInput = {
   userId: number;
@@ -26,7 +30,11 @@ export async function verify(
     if (dayjs().isAfter(res.endTimeStamp)) {
       return "item repoped";
     }
-    return `${res.itemName} is not repoped yet. it will be repoped at ${res.endTimeStamp}`;
+    return `${res.itemName} is not repoped yet. it will be repoped at ${dayjs(
+      res.endTimeStamp,
+    )
+      .tz("Asia/Tokyo")
+      .format()}`;
   } catch (e) {
     if (e instanceof Error) {
       return e.message;
