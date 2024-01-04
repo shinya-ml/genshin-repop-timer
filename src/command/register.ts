@@ -1,5 +1,9 @@
 import { Context } from "hono";
 import dayjs, { ManipulateType } from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 export type RegisterInput = {
   registerUserId: number;
@@ -14,10 +18,7 @@ export async function register(
   const durationNum = parseInt(input.duration.match(/\d+/)?.[0] || "0");
   const durationUnit = input.duration.replace(/\d+/g, "");
   const now = dayjs();
-  const startTimeStamp = now.toISOString();
-  const endTimeStamp = now
-    .add(durationNum, durationUnit as ManipulateType)
-    .toISOString();
+  const endTimeStamp = now.add(durationNum, durationUnit as ManipulateType);
 
   try {
     await c.env.DB.prepare(
@@ -27,7 +28,12 @@ export async function register(
 			  ON CONFLICT (discord_user_id, item_name) DO UPDATE SET start_timestamp = excluded.start_timestamp, end_timestamp = excluded.end_timestamp
 			  `,
     )
-      .bind(input.registerUserId, input.itemName, startTimeStamp, endTimeStamp)
+      .bind(
+        input.registerUserId,
+        input.itemName,
+        now.toISOString(),
+        endTimeStamp.toISOString(),
+      )
       .run();
   } catch (e) {
     if (e instanceof Error) {
@@ -35,5 +41,7 @@ export async function register(
     }
     return JSON.stringify(e);
   }
-  return `registerd: ${input.itemName}, it will be repoped at ${endTimeStamp}`;
+  return `registerd: ${input.itemName}, it will be repoped at ${endTimeStamp
+    .tz("Asia/Tokyo")
+    .format()}`;
 }
