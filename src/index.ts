@@ -73,7 +73,7 @@ app.post("/", verifyKeyMiddleware, async (c) => {
           const repopedItems = res.map((item) => item.itemName).join("\n");
           return c.json({
             type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-            data: { content: `repoped item: ${repopedItems}` },
+            data: { content: `repoped item: \n${repopedItems}` },
           });
         }
       }
