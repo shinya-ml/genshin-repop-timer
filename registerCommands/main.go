@@ -73,11 +73,16 @@ func main() {
 				},
 			},
 		},
+		{
+			Name:        "list",
+			Description: "list items repoped",
+		},
 	}
 	body, err := json.Marshal(testCommand)
 	if err != nil {
 		log.Fatalf("failed to marshal command: %v", err)
 	}
+	fmt.Println(string(body))
 
 	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("https://discord.com/api/v10/applications/%s/commands", applicationID), bytes.NewBuffer(body))
 	if err != nil {
