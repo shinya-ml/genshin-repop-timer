@@ -6,6 +6,7 @@ import {
 } from "discord-interactions";
 import { register } from "./command/register";
 import { verify } from "./command/verify";
+import { list } from "./command/list";
 
 type Bindings = {
   APPLICATION_ID: string;
@@ -65,6 +66,14 @@ app.post("/", verifyKeyMiddleware, async (c) => {
           return c.json({
             type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
             data: { content: res },
+          });
+        }
+        case "list": {
+          const res = await list(c.env.DB, body.member.user.id);
+          const repopedItems = res.map((item) => item.itemName).join("\n");
+          return c.json({
+            type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+            data: { content: `repoped item: ${repopedItems}` },
           });
         }
       }
