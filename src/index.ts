@@ -7,6 +7,7 @@ import {
 import { register } from "./command/register";
 import { verify } from "./command/verify";
 import { list } from "./command/list";
+import { deleteItem } from "./command/delete";
 
 type Bindings = {
   APPLICATION_ID: string;
@@ -74,6 +75,16 @@ app.post("/", verifyKeyMiddleware, async (c) => {
           return c.json({
             type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
             data: { content: `repoped item: \n${repopedItems}` },
+          });
+        }
+        case "delete": {
+          const res = await deleteItem(c.env.DB, {
+            userId: body.member.user.id,
+            itemName: body.data.options[0].value,
+          })
+          return c.json({
+            type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+            data: {content: res}
           });
         }
       }
