@@ -77,12 +77,25 @@ func main() {
 			Name:        "list",
 			Description: "list items repoped",
 		},
+		{
+			Name:        "delete",
+			Description: "delete item from database",
+			Options: []CommandOption{
+				{
+					Type:                    3,
+					Name:                    "item",
+					NameLocalization:        map[string]string{"ja": "素材名"},
+					Description:             "item name",
+					DescriptionLocalization: map[string]string{"ja": "削除したい素材名"},
+					Required:                true,
+				},
+			},
+		},
 	}
 	body, err := json.Marshal(testCommand)
 	if err != nil {
 		log.Fatalf("failed to marshal command: %v", err)
 	}
-	fmt.Println(string(body))
 
 	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("https://discord.com/api/v10/applications/%s/commands", applicationID), bytes.NewBuffer(body))
 	if err != nil {
